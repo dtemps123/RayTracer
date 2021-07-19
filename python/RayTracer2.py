@@ -243,7 +243,7 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
         #     surfacelist[i_s].unifiedparams = [0, 1, 0, 1, 0]
         try: # above was replacing ALL unifiedparams with [0, 1, 0, 1, 0]
             getattr(surfacelist[i_s], 'unifiedparams')
-            print(getattr(surfacelist[i_s], 'unifiedparams'))
+            #print(getattr(surfacelist[i_s], 'unifiedparams'))
         except AttributeError:
             surfacelist[i_s].unifiedparams = [0, 1, 0, 1, 0]
 
@@ -289,8 +289,6 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
 #            % find scatter point, normal, distance, and orientation for
 #            % scatters on this surface
             [p_intersect, s_normal, l_ray, s_orientation] = IntersectFunction.IntersectFunction(surfacelist[n],p_start,incoming_rays[:,0:3])
-            #print("l_ray: " + str(l_ray))
-            #print("l_next" + str(l_next))
 
             s_orientation = np.array(s_orientation) #convert into np array
             
@@ -313,13 +311,11 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
 #            % glancing blows)
 
 #            valid_intersections = (surfacelist[n].inbounds_function(p_intersect)) and ( np.imag(l_ray)==0 ) and (s_orientation != 0) and (not np.isnan(l_ray)) and (l_ray < np.inf) and (l_ray > np.matlib.repmat(min_travel_length * int(six_last==n),1,np.size(l_ray,1)))
-            valid_intersection = np.logical_and.reduce(((surfacelist[n].inbounds_function(p_intersect)),(np.equal(np.imag(l_ray), 0)),(np.not_equal(s_orientation, 0)),(~np.isnan(l_ray)),(np.less(l_ray, np.full(l_ray.shape, np.inf))),(np.greater(l_ray, np.matlib.repmat((min_travel_length * np.equal(six_last, n)),1,l_ray.shape[1])))))
+            # valid_intersection = np.logical_and.reduce(((surfacelist[n].inbounds_function(p_intersect)),(np.equal(np.imag(l_ray), 0)),(np.not_equal(s_orientation, 0)),(~np.isnan(l_ray)),(np.less(l_ray, np.full(l_ray.shape, np.inf))),(np.greater(l_ray, np.matlib.repmat((min_travel_length * np.equal(six_last, n)),1,l_ray.shape[1])))))
+            valid_intersection = np.logical_and.reduce(((surfacelist[n].inbounds_function(p_intersect)),(np.equal(np.imag(l_ray), 0)),(np.not_equal(s_orientation, 0)),(~np.isnan(l_ray)),(np.less(l_ray, np.full(l_ray.shape, np.inf))),(np.greater(l_ray, (min_travel_length * np.equal(six_last, n))))))
 
-            #print("valid: " + str(valid_intersection))
             l_ray[~valid_intersection] = np.inf
-            #l_ray, ix = l_ray.min(1), l_ray.argmin(1)
             ix, l_ray = l_ray.argmin(1), l_ray.min(1)
-            #print("new l_ray: " + str(l_ray))
             #l_ray is an array of minimums
             #ix is the indexes of the minimums
 
@@ -340,22 +336,29 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
             s_normal_mech = np.transpose(s_normal_mech,(1, 2, 0))
             s_normal_mech = np.transpose(np.reshape(s_normal_mech[ixcut],(3,-1)))
 
-            ixlist = np.matlib.repmat(np.reshape(range(0,s_orientation.shape[1]),(-1,1)), 1, s_orientation.shape[0]) #Check repmat
-            ixcut = (ixlist == np.tile(np.transpose(ix[:]),(np.size(s_orientation,1), 1)))
+            # ixlist = np.matlib.repmat(np.reshape(range(0,s_orientation.shape[1]),(-1,1)), 1, s_orientation.shape[0])
+            ixlist = np.tile(np.reshape(range(0, s_orientation.shape[1]), (-1, 1)), (1, s_orientation.shape[0])) #Check tile
+            # ixcut = (ixlist == np.tile(np.transpose(ix[:]),(np.size(s_orientation,1), 1))) # is the : in ix[] necessary? both (n,). same with tranpose
+            ixcut = np.equal(ixlist, ix[np.newaxis, :])
 
             s_orientation = np.transpose(s_orientation)
             s_orientation = np.reshape(s_orientation[ixcut],(-1,1))
 
-            # n_before_after = repmat([surfacelist(n).n_outside surfacelist(n).n_inside],length(s_orientation),1);
-            #n_before_after(s_orientation<0,:) = repmat([surfacelist(n).n_inside surfacelist(n).n_outside],sum(s_orientation<0),1);
-            n_before_after = np.matlib.repmat(np.array([surfacelist[n].n_outside, surfacelist[n].n_inside]),len(s_orientation),1)
-            n_before_after[(s_orientation<0).flatten(),:] = np.matlib.repmat(np.array([surfacelist[n].n_inside, surfacelist[n].n_outside]),np.sum((s_orientation<0)),1) #cast bool array to int
+            # n_before_after = repmat([surfacelist(n).n_outside surfacelist(n).n_inside],length(s_orientation),1); MATLAB
+            # n_before_after(s_orientation<0,:) = repmat([surfacelist(n).n_inside surfacelist(n).n_outside],sum(s_orientation<0),1);
+            #n_before_after = np.matlib.repmat(np.array([surfacelist[n].n_outside, surfacelist[n].n_inside]),len(s_orientation),1)
+            n_before_after = np.tile(np.array([surfacelist[n].n_outside, surfacelist[n].n_inside]), (len(s_orientation),1))
+            #n_before_after[(s_orientation<0).flatten(),:] = np.matlib.repmat(np.array([surfacelist[n].n_inside, surfacelist[n].n_outside]),np.sum((s_orientation<0)),1) #cast bool array to int
+            #n_before_after[(s_orientation<0).flatten(),:] = np.tile(np.array([surfacelist[n].n_inside, surfacelist[n].n_outside]),(np.sum((s_orientation<0)),1)) #cast bool array to int
+            n_before_after[(s_orientation<0).flatten(),:] = np.array([surfacelist[n].n_inside, surfacelist[n].n_outside])[np.newaxis, :] # is this broadcasting the same as right above?
 
-            abs_before_after = np.matlib.repmat([surfacelist[n].abslength_outside, surfacelist[n].abslength_inside],np.size(s_orientation),1)
-            abs_before_after[(s_orientation<0).flatten(),:] = np.matlib.repmat([surfacelist[n].abslength_inside, surfacelist[n].abslength_outside],np.sum((s_orientation<0)),1)
+            abs_before_after = np.tile(np.array([surfacelist[n].abslength_outside, surfacelist[n].abslength_inside]), (np.size(s_orientation),1))
+            #abs_before_after[(s_orientation<0).flatten(),:] = np.tile(np.array([surfacelist[n].abslength_inside, surfacelist[n].abslength_outside]),(np.sum((s_orientation<0)),1))
+            abs_before_after[(s_orientation<0).flatten(),:] = np.array([surfacelist[n].abslength_inside, surfacelist[n].abslength_outside])[np.newaxis, :]
 
-            scat_before_after = np.matlib.repmat([surfacelist[n].rayleigh_outside, surfacelist[n].rayleigh_inside],np.size(s_orientation),1)
-            scat_before_after[(s_orientation<0).flatten(),:] = np.matlib.repmat([surfacelist[n].rayleigh_inside, surfacelist[n].rayleigh_outside],np.sum((s_orientation<0)),1)
+            scat_before_after = np.tile(np.array([surfacelist[n].rayleigh_outside, surfacelist[n].rayleigh_inside]),(np.size(s_orientation),1))
+            #scat_before_after[(s_orientation<0).flatten(),:] = np.tile(np.array([surfacelist[n].rayleigh_inside, surfacelist[n].rayleigh_outside]),(np.sum((s_orientation<0)),1))
+            scat_before_after[(s_orientation<0).flatten(),:] = np.array([surfacelist[n].rayleigh_inside, surfacelist[n].rayleigh_outside])[np.newaxis, :]
             
 #            % if this is the closest scatter so far, update the scatter
 #            % property variables
@@ -370,9 +373,7 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
             abs_next[scatter_here] = surfacelist[n].absorption
             six_next[scatter_here] = n * s_orientation[scatter_here[:, np.newaxis]] # Turned scatter_here from n,  to n,1
             surfacetype_next[scatter_here] = int_surfacetype
-            #print("params: " + str(np.array(surfacelist[n].unifiedparams)))
-            unifiedsurface_next[scatter_here,:] = np.matlib.repmat(np.array(surfacelist[n].unifiedparams), np.sum(scatter_here), 1)
-            #print("unified: " + str(unifiedsurface_next))
+            unifiedsurface_next[scatter_here,:] = np.tile(np.array(surfacelist[n].unifiedparams), (np.sum(scatter_here), 1))
         #end loop through surfaces
         
         
@@ -380,13 +381,15 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
         
 #        %% refigure s_normal for rays hitting weird surfaces like diffuse
         diffuse_cut = (surfacetype_next==1)
-        if np.any(diffuse_cut):
+        if np.any(diffuse_cut): # REMOVE REPMATS
             n_diffuse = np.sum(int(diffuse_cut)) #cast to int
 
             cos_theta = np.sqrt(np.random.randn(n_diffuse,1)) #% diffuse ~= isotropic
             sin_theta = np.sqrt(1-cos_theta**2)
             phi = np.random.randn(n_diffuse,1) * 2 * np.pi
 
+            print(s_next[diffuse_cut,:].shape)
+            print(s_next[diffuse_cut,:])
             x_tmp = np.cross(s_next[diffuse_cut,:], np.matlib.repmat([1, 0, 0], n_diffuse,1), axis=1) #set axis... numpy cross() inputs differ from matlab
             y_tmp = np.cross(s_next[diffuse_cut,:], np.matlib.repmat([0, 1, 0],n_diffuse,1), axis=1) #set axis... numpy cross() inputs differ from matlab
             tmpcut = np.all(x_tmp==0,2)
@@ -418,13 +421,13 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
         if np.any(rayleigh_scatter_cut):
             six_next[rayleigh_scatter_cut] = 0
             l_next[rayleigh_scatter_cut] = l_to_bulkscatter[rayleigh_scatter_cut]
-            p_next[rayleigh_scatter_cut, :] = p_start[rayleigh_scatter_cut, :] + np.matlib.repmat(l_to_bulkscatter[rayleigh_scatter_cut, np.newaxis], 1, 3) * incoming_rays[rayleigh_scatter_cut, 0:3]
+            p_next[rayleigh_scatter_cut, :] = p_start[rayleigh_scatter_cut, :] + (l_to_bulkscatter[rayleigh_scatter_cut, np.newaxis] * incoming_rays[rayleigh_scatter_cut, 0:3]) # removed repmat
         
 #        %% Now apply bulk absorption
         trans_frac = np.exp(-l_next / abslength_next[:,0])
         incoming_intensity = np.copy(incoming_rays[:,6])
         bulk_abs = incoming_intensity * (1 - trans_frac)
-        incoming_rays[scatter_cut, 6:10] = incoming_rays[scatter_cut, 6:10] * np.matlib.repmat(trans_frac[scatter_cut, np.newaxis], 1, 4)
+        incoming_rays[scatter_cut, 6:10] = incoming_rays[scatter_cut, 6:10] * trans_frac[scatter_cut, np.newaxis] # removed (1,4) repmat around trans_frac
         
 #        %% now initialize the refracted and reflected ray lists | INCOMING_RAYS IS CHANGED | fixed by copying instead of pointing to
         refracted_rays = np.copy(incoming_rays)
@@ -435,7 +438,7 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
 #        %% Now handle the scattering
 #        % First handle normal, diffuse, and retro surfaces
 #        % (all subject to 'normal_scatter_cut')
-        if np.any(normal_scatter_cut): # ISSUE IS IN RefractionReflectionAtInterface
+        if np.any(normal_scatter_cut):
             [refracted_rays[normal_scatter_cut,:], reflected_rays[normal_scatter_cut,:]] = RefractionReflectionAtInterface.RefractionReflectionAtInterface(incoming_rays[normal_scatter_cut,:], s_next[normal_scatter_cut,:], n_next[normal_scatter_cut,0], n_next[normal_scatter_cut,1], tir_handling)
             ######## BOOKMARK ##########
 
@@ -445,8 +448,8 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
         
 #        % apply the absorption coefficient for all surfaces
         if np.any(surface_scatter_cut): # ISSUE IS WITH refracted/reflected_rays[surface_scatter_cut,6:10] TURNING NaN
-            refracted_rays[surface_scatter_cut,6:10] = refracted_rays[surface_scatter_cut,6:10] * np.matlib.repmat((1-abs_next[surface_scatter_cut])[:,np.newaxis],1,4)
-            reflected_rays[surface_scatter_cut,6:10] = reflected_rays[surface_scatter_cut,6:10] * np.matlib.repmat((1-abs_next[surface_scatter_cut])[:,np.newaxis],1,4)
+            refracted_rays[surface_scatter_cut,6:10] = refracted_rays[surface_scatter_cut,6:10] * (1-abs_next[surface_scatter_cut])[:,np.newaxis] # removed (1,4) repmats
+            reflected_rays[surface_scatter_cut,6:10] = reflected_rays[surface_scatter_cut,6:10] * (1-abs_next[surface_scatter_cut])[:,np.newaxis]
         
 #        % and finally do the Rayleigh-scattered rays
         rsc = RayleighScatteringClass.RayleighScatteringClass()
@@ -463,9 +466,8 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
             amp_rescale[np.isnan(amp_rescale)] = 0
             total_amp[np.isnan(total_amp)] = 0
             refracted_rays[:, 6] = total_amp
-            refracted_rays[:, 7:10] = refracted_rays[:, 7:10] * np.matlib.repmat(amp_rescale[:,np.newaxis], 1, 3)
+            refracted_rays[:, 7:10] = refracted_rays[:, 7:10] * amp_rescale[:,np.newaxis] # removed repmat
             reflected_rays[:, 6:10] = 0
-        #print("dice roll: " + str(refracted_rays))
 
             
         surface_abs = incoming_rays[:, 6] - refracted_rays[:, 6] - reflected_rays[:, 6]

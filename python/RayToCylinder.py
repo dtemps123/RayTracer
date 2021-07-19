@@ -79,10 +79,10 @@ def RayToCylinder(starting_points, indir, cyl_center, cyl_axis, cylinder_radius)
     # % || u + l*v || = r
     # % a*l^2 + b*l + c = 0, a = 1
 
-    x = np.array(starting_points) - np.matlib.repmat(cylinder_center,numrays,1)
+    x = np.array(starting_points) - cylinder_center
     #u = (x * np.transpose(cylinder_axis) * cylinder_axis) - x
     #u = np.matmul(np.matmul(x, np.transpose(cylinder_axis)), cylinder_axis) - x
-    u = (x @ np.transpose(cylinder_axis) @ cylinder_axis) - x
+    u = (x @ np.transpose(cylinder_axis) @ cylinder_axis) - x # the @ is numpy matrix multiplication
 
 
     #v = (np.array(indir) * np.transpose(cylinder_axis) * cylinder_axis) - np.array(indir)
@@ -105,10 +105,10 @@ def RayToCylinder(starting_points, indir, cyl_center, cyl_axis, cylinder_radius)
 
 
     if np.any(linear_cut): #Might have to switch dimensions linear_cut and :
-        distance_traveled[linear_cut,:] = np.matlib.repmat((-c[linear_cut] / b[linear_cut])[:,np.newaxis], 1, 2)
+        distance_traveled[linear_cut,:] = np.tile((-c[linear_cut] / b[linear_cut])[:,np.newaxis], (1, 2))
     if np.any(quad_cut):
         #distance_traveled[quad_cut,:] = np.add(np.matlib.repmat((-.5 * b[quad_cut] / a[quad_cut])[:,np.newaxis], 1, 2), (.5 * np.sqrt(b[quad_cut]**2 - 4 * a[quad_cut] * c[quad_cut]) / a[quad_cut])[:, np.newaxis] * np.array([1, -1]))
-        distance_traveled[quad_cut, :] = np.add(np.matlib.repmat((-.5 * b[quad_cut] / a[quad_cut])[:,np.newaxis], 1, 2), (.5 * np.sqrt(b[quad_cut]**2 - 4 * a[quad_cut] * c[quad_cut]) / a[quad_cut])[:, np.newaxis]) * np.array([1, -1])
+        distance_traveled[quad_cut, :] = np.add((-.5 * b[quad_cut] / a[quad_cut])[:,np.newaxis], (.5 * np.sqrt(b[quad_cut]**2 - 4 * a[quad_cut] * c[quad_cut]) / a[quad_cut])[:, np.newaxis]) * np.array([1, -1])
 
 
     # %% find intersection_points
@@ -117,11 +117,12 @@ def RayToCylinder(starting_points, indir, cyl_center, cyl_axis, cylinder_radius)
 
 
     # %% find surface_normals
-    x = intersection_points[:,:,0] - np.matlib.repmat(cylinder_center, numrays, 1) # intersection_points[:,:,0] takes the first set of quadratic solutions
+    # check broadcasting vs np.matlib.repmat(cylinder_center, numrays, 1) \/\/\/\/ for x and y
+    x = intersection_points[:,:,0] - cylinder_center # intersection_points[:,:,0] takes the first set of quadratic solutions
     #u = (x * np.transpose(cylinder_axis) * cylinder_axis) - x
     #u = np.matmul(np.matmul(x, np.transpose(cylinder_axis)), cylinder_axis) - x
     u = (x @ np.transpose(cylinder_axis) * cylinder_axis) - x
-    y = intersection_points[:,:,1] - np.matlib.repmat(cylinder_center, numrays, 1)
+    y = intersection_points[:,:,1] - cylinder_center
     #v = (y * np.transpose(cylinder_axis) * cylinder_axis) - y
     #v = np.matmul(np.matmul(y, np.transpose(cylinder_axis)), cylinder_axis) - y
     v = (y @ np.transpose(cylinder_axis) @ cylinder_axis) - y

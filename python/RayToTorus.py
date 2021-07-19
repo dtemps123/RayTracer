@@ -31,7 +31,7 @@ def RayToTorus(starting_points, indir, torus_center, torus_axis, r1, r2):
         starting_points.shape[1] != 3 or indir.shape[1] != 3 or starting_points.shape[0] != indir.shape[0]:
         raise Exception('Improper input to RayToTorus')
     torus_center = np.transpose(torus_center[:,np.newaxis])
-    torus_axis = np.transpoe(torus_axis[:,np.newaxis])
+    torus_axis = np.transpose(torus_axis[:,np.newaxis])
     numrays = starting_points.shape[0]
 
     if np.sum(torus_axis**2) > 0:
@@ -44,7 +44,7 @@ def RayToTorus(starting_points, indir, torus_center, torus_axis, r1, r2):
     # % ||u+lv||^2 + r1^2 + ||y+lw||^2 - r2^2 = 2*r1*||u+lv||
     # % [ uu + 2luv + llvv + r1^2 + yy + 2lyw + llww - r2^2 ] ^2 = 4 * r1^2 * (uu + 2luv + llvv)
     # % a4*l^4 + a3*l^3 + a2*l^2 + a1*l + a0 = 0
-    x = starting_points - np.matlib.repmat(torus_center, numrays, 1)
+    x = starting_points - torus_center
     y = (x @ np.transpose(torus_axis) @ torus_axis)
     u = y - x
     w = (indir @ np.transpose(torus_axis) @ torus_axis)
@@ -70,11 +70,11 @@ def RayToTorus(starting_points, indir, torus_center, torus_axis, r1, r2):
     distance_traveled[nan_cut, :] = np.nan
 
     if np.any(linear_cut):
-        distance_traveled[linear_cut, 0:2] = np.matlib.repmat(-a[linear_cut, 4] / a[linear_cut, 3], 1, 2)
+        distance_traveled[linear_cut, 0:2] = -a[linear_cut, 4] / a[linear_cut, 3]
         distance_traveled[linear_cut, 2:4] = np.nan
 
     if np.any(quad_cut):
-        distance_traveled[quad_cut, 0:2] = np.matlib.repmat(-0.5 * a[quad_cut, 3] / a[quad_cut, 2], 1, 2) + \
+        distance_traveled[quad_cut, 0:2] = np.tile(-0.5 * a[quad_cut, 3] / a[quad_cut, 2], (1, 2)) + \
                                            ((0.5 * np.sqrt(a[quad_cut, 3]**2 - 4 * a[quad_cut, 2] * a[quad_cut, 4]) /
                                              a[quad_cut, 2])) * np.array([1, -1])
         distance_traveled[quad_cut, 2:4] = np.nan
@@ -94,10 +94,10 @@ def RayToTorus(starting_points, indir, torus_center, torus_axis, r1, r2):
     # find surface_normals
     surface_normals = np.zeros(intersection_points.shape)
     for i_l in range(4):
-        x = intersection_points[:, :, i_l] - np.matlib.repmat(torus_center, numrays, 1)
+        x = intersection_points[:, :, i_l] - torus_center
         y = (x @ np.transpose(torus_axis) @ torus_axis)
         u = x - y
-        surface_normals[:, :, i_l] = (1 / r2) @ (u * (1 - (r1 / np.matlib.repmat(np.sqrt(np.sum(u**2, axis=1))[:,np.newaxis], 1, 3))) + y)
+        surface_normals[:, :, i_l] = (1 / r2) @ (u * (1 - (r1 / np.sqrt(np.sum(u**2, axis=1))[:,np.newaxis])) + y)
 
     crossing_into = np.round_(-np.sign(np.sum(indir[:, :, np.newaxis] * surface_normals, axis=1)))
     surface_normals = surface_normals * crossing_into[:, np.newaxis, :]

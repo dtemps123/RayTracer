@@ -137,7 +137,7 @@ def main():
 
     [starts, rays, surfaces] = TestGeometry(7)
     [ray_interfaces, absorption_table, raytable] = RayTracer2.RayTracer2(starts, rays, surfaces)
-    report(ray_interfaces, absorption_table, raytable, epsilon)
+    #report(ray_interfaces, absorption_table, raytable, epsilon)
 
 
     # # plot

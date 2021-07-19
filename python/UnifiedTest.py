@@ -35,7 +35,6 @@ def main():
     panel.unifiedparams = [0, 0, .25, .5, .1]
     panel.absorption = 0
     surface_list.append(panel)
-    print("size test: " + str(np.size(panel.unifiedparams)))
 
     # construct light rays
     # start them along z-axis, pointing down for normal incidence
@@ -44,7 +43,7 @@ def main():
     y = 0
     z = 5
 
-    n = 1000000  # number of rays
+    n = 100  # number of rays
 
     ray_startpoints = np.empty((n, 3))
     ray_startpoints[..., 0] = x
@@ -95,10 +94,10 @@ def main():
     ax.set_xlabel("\u03C6  (azimuth)") # phi
     ax.grid(True)
 
-    print("intersection: " + str(ray_interfaces[1].intersection_point))
-    print("points: " + str(points))
-    print("counts: " + str(counts))
-    print("check: " + str(np.concatenate((phi_0, np.cos(theta_0)), axis=1)))
+    #print("intersection: " + str(ray_interfaces[1].intersection_point))
+    #print("points: " + str(points))
+    #print("counts: " + str(counts))
+    #print("check: " + str(np.concatenate((phi_0, np.cos(theta_0)), axis=1)))
 
     plt.text(.96, .08, "# rays perfectly reflected = {}".format(int(np.sum(counts))), bbox={'facecolor':'w','pad':5}, ha="right", va="top", transform=plt.gca().transAxes) #check the counts/2
 

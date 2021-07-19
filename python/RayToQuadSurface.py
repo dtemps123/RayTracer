@@ -35,7 +35,7 @@ def RayToQuadSurface(starting_points, indir, q, p, r):
     crossing_into = []
 
     # check inputs
-    if params != 5 or q.size != 9 or len(p) != 3 or r.size != 1 or starting_points.shape[1] != 3 or \
+    if params != 5 or q.size != 9 or len(p) != 3 or not isinstance(r, (int, float)) or starting_points.shape[1] != 3 or \
             indir.shape[1] != 3 or len(starting_points) != len(indir) or len(starting_points.shape) != 2 or \
             len(indir.shape) != 2:
         raise Exception('Improper input to RayToQuadsurface')
@@ -60,9 +60,9 @@ def RayToQuadSurface(starting_points, indir, q, p, r):
     #     sum((starting_points * Q) .* incoming_directions, 2);
     # c = R + (starting_points * P) + ...
     #     sum((starting_points * Q) .* starting_points, 2);
-    a = np.sum((indir * q) * indir, 1)
-    b = (indir * p) + np.sum((indir * q) * starting_points, 1) + np.sum((starting_points * q) * indir, 1)
-    c = r + (starting_points * p) + np.sum((starting_points * q) * starting_points, 1) # will likely have to turn r into an np array
+    a = np.sum((indir @ q) * indir, 1) # swapped indir * q for indir @ q, same below
+    b = (indir @ p) + np.sum((indir @ q) * starting_points, 1) + np.sum((starting_points @ q) * indir, 1)
+    c = r + (starting_points @ p) + np.sum((starting_points @ q) * starting_points, 1) # will likely have to turn r into an np array
 
     # linear cut = a==0 & b!=0
     # the previous line is strictly true, but we also want to avoid rounding error here...
@@ -74,7 +74,7 @@ def RayToQuadSurface(starting_points, indir, q, p, r):
     linear_cut = np.not_equal(b, 0)
     linear_cut[linear_cut] = np.less(np.abs(4 * a[linear_cut] * c[linear_cut] / (b[linear_cut] ** 2)), (100 * np.spacing(np.float64(1)))) # machine epsilon
     quad_cut = np.logical_and(np.not_equal(a, 0), ~linear_cut)
-    distance_traveled = np.zeros(numrays, 2)
+    distance_traveled = np.zeros((numrays, 2))
     distance_traveled[~(np.logical_or(linear_cut, quad_cut)), :] = np.nan
 
     # if any(linear_cut)
@@ -87,8 +87,11 @@ def RayToQuadSurface(starting_points, indir, q, p, r):
         distance_traveled[linear_cut, 0] = -c[linear_cut] / b[linear_cut]
         distance_traveled[linear_cut, 1] = -b[linear_cut] / a[linear_cut]
     if np.any(quad_cut):
-        distance_traveled[quad_cut, :] = (np.matlib.repmat(-0.5 * b[quad_cut] / a[quad_cut], 1, 2) +
-            (0.5 * np.sqrt(b[quad_cut]**2 - 4 * a[quad_cut] * c[quad_cut]) / a[quad_cut])) * [1, -1] # check repmat shape
+        print(b.shape)
+        print(a.shape)
+        print(distance_traveled[quad_cut, :].shape)
+        distance_traveled[quad_cut, :] = (np.tile((-0.5 * b[quad_cut] / a[quad_cut])[:, np.newaxis], (1, 2)) +
+            (0.5 * (np.sqrt(b[quad_cut]**2 - 4 * a[quad_cut] * c[quad_cut]) / a[quad_cut])[:, np.newaxis])) * [1, -1] # check tile shape | * or @?
 
     # find intersection points
     intersection_points = starting_points[:,:,np.newaxis] + distance_traveled[:, np.newaxis, :] * indir[:, :, np.newaxis] # No need to reshape or tile starting_points or indir, will be handled automatically by numpy broadcasting
@@ -101,11 +104,11 @@ def RayToQuadSurface(starting_points, indir, q, p, r):
     #     surface_normals(goodnormal_cut,:,n) = surface_normals(goodnormal_cut,:,n) ./ ...
     #         repmat(abs(sqrt(sum(surface_normals(goodnormal_cut,:,n).^2, 2))),1,3);
     surface_normals = np.zeros(intersection_points.shape)
-    for n in range(0, surface_normals.shape[2] + 1):
-        surface_normals[:, :, n] = 2 * intersection_points[:, :, n] * q + np.matlib.repmat(np.transpose(p), numrays, 1) # check repmat shape
+    for n in range(0, surface_normals.shape[2]): # + 1):
+        surface_normals[:, :, n] = 2 * intersection_points[:, :, n] @ q + np.transpose(p) # check np.transpose(p) broadcasting shape
         goodnormal_cut = np.sum(surface_normals[:, :, n] ** 2, 1) > 0
         surface_normals[goodnormal_cut, :, n] = surface_normals[goodnormal_cut, :, n] / \
-            np.matlib.repmat(np.abs(np.sqrt(np.sum(surface_normals[goodnormal_cut, :, n] ** 2, 1))), 1, 3) # check repmat shape
+            np.abs(np.sqrt(np.sum(surface_normals[goodnormal_cut, :, n] ** 2, 1)))[:,np.newaxis] # check broadcasting shape; denominator assumed (n,)
 
     # crossing_into = round(-sign(sum(repmat(incoming_directions,[1,1,2]) .* surface_normals,2)));
     # surface_normals = surface_normals .* repmat(crossing_into,[1 3 1]);

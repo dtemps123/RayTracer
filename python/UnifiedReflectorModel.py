@@ -69,8 +69,9 @@ def GetFacetNormal(indir, s_norm, s_x, s_y, sig_a):
         fail_prob_jacob = np.random.random_sample(np.size(thetas))*np.minimum(these_sig_a*4,1) > sinthetas
         
         phis = 2*np.pi*np.random.random_sample(np.size(thetas))
-        
-        facet_normal[not facets_set, :] = s_norm[not facets_set,:] * np.matlib.repmat(costhetas, 1, 3) + s_x[not facets_set,:] * np.matlib.repmat(sinthetas, 1, 3) * np.matlib.repmat(np.cos(phis), 1, 3) + s_y[not facets_set,:] * np.matlib.repmat(sinthetas, 1, 3) * np.matlib.repmat(np.sin(phis), 1, 3)
+
+        #facet_normal[not facets_set, :] = s_norm[not facets_set,:] * np.matlib.repmat(costhetas, 1, 3) + s_x[not facets_set,:] * np.matlib.repmat(sinthetas, 1, 3) * np.matlib.repmat(np.cos(phis), 1, 3) + s_y[not facets_set,:] * np.matlib.repmat(sinthetas, 1, 3) * np.matlib.repmat(np.sin(phis), 1, 3)
+        facet_normal[not facets_set, :] = (s_norm[not facets_set,:] * costhetas[:,np.newaxis]) + (s_x[not facets_set,:] * sinthetas[:,np.newaxis] * np.cos(phis)[:,np.newaxis]) + (s_y[not facets_set,:] * sinthetas[:,np.newaxis] * np.sin(phis)[:,np.newaxis])
         
         wrongside = np.sum(indir[not facets_set,:]*facet_normal[not facets_set,:], 1)>=0
         
@@ -83,9 +84,10 @@ def GetLambertianNormal(indir, s_norm, s_x, s_y):
     out_costheta = np.sqrt(np.random.random_sample((np.size(indir,0), 1))) # % diffuse ~= isotropic | randn --> random_sample for uniform distribution
     out_sintheta = np.sqrt(1 - out_costheta**2)
     out_phi = 2*np.pi*np.random.random_sample(out_costheta.shape) # randn --> random_sample for uniform distribution
-    outdir = s_norm * np.matlib.repmat(out_costheta, 1, 3) + s_x * np.matlib.repmat(out_sintheta, 1, 3) * np.matlib.repmat(np.cos(out_phi), 1, 3) + s_y * np.matlib.repmat(out_sintheta, 1, 3) * np.matlib.repmat(np.sin(out_phi), 1, 3)
+    # = s_norm * np.matlib.repmat(out_costheta, 1, 3) + s_x * np.matlib.repmat(out_sintheta, 1, 3) * np.matlib.repmat(np.cos(out_phi), 1, 3) + s_y * np.matlib.repmat(out_sintheta, 1, 3) * np.matlib.repmat(np.sin(out_phi), 1, 3)
+    outdir = (s_norm * out_costheta) + (s_x * out_sintheta * np.cos(out_phi)) + (s_y * out_sintheta * np.sin(out_phi))
     facet_normal = outdir - indir
-    facet_normal = facet_normal / np.matlib.repmat(np.abs(np.sqrt(np.sum(facet_normal**2,1)))[:,np.newaxis],1,3)
+    facet_normal = facet_normal / np.abs(np.sqrt(np.sum(facet_normal**2,1)))[:,np.newaxis]
     
     return [facet_normal, outdir]
 
@@ -101,7 +103,9 @@ def UnifiedReflectorModel(incoming_rays, surface_normals, n1, n2, reflector_para
         raise Exception('improper input to UnifiedReflectorModel')
 
     if np.size(n1)==1:
+        print("n1 " + str(n1.shape))
         n1 = np.matlib.repmat(n1[:,np.newaxis],np.size(incoming_rays,0),1) # is the np.newaxis necessary here?
+        print(n1.shape)
 
     if np.size(n2)==1:
         n2 = np.matlib.repmat(n2,np.size(incoming_rays,0),1)
@@ -117,16 +121,16 @@ def UnifiedReflectorModel(incoming_rays, surface_normals, n1, n2, reflector_para
     # %% normalize inputs
     goodray_cut = np.sum(incoming_rays[:,0:3]**2,1) > 0
     if np.any(goodray_cut):
-        incoming_rays[goodray_cut,0:3] = incoming_rays[goodray_cut,0:3] / np.matlib.repmat(np.abs(np.sqrt(np.sum(incoming_rays[goodray_cut,0:3]**2,1)))[:, np.newaxis],1,3)
+        incoming_rays[goodray_cut,0:3] = incoming_rays[goodray_cut,0:3] / np.abs(np.sqrt(np.sum(incoming_rays[goodray_cut,0:3]**2,1)))[:, np.newaxis]
 
     goodsurface_cut = np.sum(surface_normals**2,1) > 0
     if np.any(goodsurface_cut):
-        surface_normals[goodsurface_cut,:] = surface_normals[goodsurface_cut,:] / np.matlib.repmat(np.abs(np.sqrt(np.sum(surface_normals[goodsurface_cut,:]**2,1)))[:, np.newaxis],1,3)
+        surface_normals[goodsurface_cut,:] = surface_normals[goodsurface_cut,:] / np.abs(np.sqrt(np.sum(surface_normals[goodsurface_cut,:]**2,1)))[:, np.newaxis]
 
-    incoming_rays[:,3:6] = incoming_rays[:,3:6] - np.matlib.repmat(np.sum(incoming_rays[:,3:6]*incoming_rays[:,0:3],1)[:, np.newaxis],1,3) * incoming_rays[:,0:3]
+    incoming_rays[:,3:6] = incoming_rays[:,3:6] - np.sum(incoming_rays[:,3:6]*incoming_rays[:,0:3],1)[:, np.newaxis] * incoming_rays[:,0:3]
     goodpolarization_cut = np.sum(incoming_rays[:,3:6]**2, axis=1) > 0
     if np.any(goodpolarization_cut):
-        incoming_rays[goodpolarization_cut,3:6] = incoming_rays[goodpolarization_cut,3:6] / np.matlib.repmat(np.abs(np.sqrt(np.sum(incoming_rays[goodpolarization_cut,3:6]**2,1)))[:, np.newaxis],1,3)
+        incoming_rays[goodpolarization_cut,3:6] = incoming_rays[goodpolarization_cut,3:6] / np.abs(np.sqrt(np.sum(incoming_rays[goodpolarization_cut,3:6]**2,1)))[:, np.newaxis]
 
     # %% set defaults
     reflected_rays = np.copy(incoming_rays)
@@ -139,14 +143,14 @@ def UnifiedReflectorModel(incoming_rays, surface_normals, n1, n2, reflector_para
     sin_incident_angle = np.abs(np.sqrt(np.sum(interface_normals**2, 1)))
     goodinterface_cut = sin_incident_angle > 0
     if np.any(goodinterface_cut):
-        interface_normals[goodinterface_cut,:] = interface_normals[goodinterface_cut,:] / np.matlib.repmat(sin_incident_angle[goodinterface_cut, np.newaxis],1,3)
+        interface_normals[goodinterface_cut,:] = interface_normals[goodinterface_cut,:] / sin_incident_angle[goodinterface_cut, np.newaxis]
 
     if np.any(~goodinterface_cut):
-        tmp_inorms = np.cross(np.matlib.repmat([1,0,0], np.sum(~goodinterface_cut), 1), surface_normals[~goodinterface_cut, :], axis=1)
+        tmp_inorms = np.cross(np.tile([1,0,0], (np.sum(~goodinterface_cut), 1)), surface_normals[~goodinterface_cut, :], axis=1) #check shape of [1, 0, 0] with tile
         tmp_norms_good = np.sum(tmp_inorms**2, axis=1)>0
-        tmp_inorms2 = np.cross(np.matlib.repmat([0,1,0], np.sum(~goodinterface_cut), 1), surface_normals[~goodinterface_cut, :], axis=1)
+        tmp_inorms2 = np.cross(np.tile([0,1,0], (np.sum(~goodinterface_cut), 1)), surface_normals[~goodinterface_cut, :], axis=1) #same here
         tmp_inorms[~tmp_norms_good,:] = tmp_inorms2[~tmp_norms_good,:]
-        interface_normals[~goodinterface_cut,:] = tmp_inorms / np.matlib.repmat(np.abs(np.sqrt(np.sum(tmp_inorms**2, 1)))[:,np.newaxis], 1, 3)
+        interface_normals[~goodinterface_cut,:] = tmp_inorms / np.abs(np.sqrt(np.sum(tmp_inorms**2, 1)))[:,np.newaxis]
 
     # %% and complete the local bases of (interface_normal, interface_yaxis, surface_normal)
     interface_yaxis = np.cross(surface_normals, interface_normals, axis=1)
@@ -177,9 +181,14 @@ def UnifiedReflectorModel(incoming_rays, surface_normals, n1, n2, reflector_para
             if np.any(np.isnan(this_reflectedray[:])):
                 print('whoops! -- this_reflectedkray has NaN elements')
             
-            # % renormalize refracted/reflected intensities to the initial ray  | causing NaNs; 0 * inf = nan | nan_to_num?
-            this_refractedray[:,6:10] = this_refractedray[:,6:10] * np.matlib.repmat((reflected_rays[still_crossing,6]/this_refractedray[:,6])[:,np.newaxis], 1, 4)
-            this_reflectedray[:,6:10] = this_reflectedray[:,6:10] * np.matlib.repmat((reflected_rays[still_crossing,6]/this_reflectedray[:,6])[:,np.newaxis], 1, 4) # here, s0 this_reflected=0
+            # % renormalize refracted/reflected intensities to the initial ray  | causing NaNs; 0 / 0 = nan | nan_to_num?
+            #print("refracted before: " + str(this_refractedray))
+            print(reflected_rays[still_crossing,6])
+            print(this_refractedray[:,6])
+            print(reflected_rays[still_crossing,6] / this_refractedray[:,6])
+            this_refractedray[:,6:10] = this_refractedray[:,6:10] * (reflected_rays[still_crossing,6]/this_refractedray[:,6])[:,np.newaxis]
+            #print("refracted after: " + str(this_refractedray))
+            this_reflectedray[:,6:10] = this_reflectedray[:,6:10] * (reflected_rays[still_crossing,6]/this_reflectedray[:,6])[:,np.newaxis] # here, s0 this_reflected=0
             
             if np.any(np.isnan(this_refractedray[~reflect_here, 6])): # this is being called
                 print('whoops refracted!')
@@ -225,7 +234,7 @@ def UnifiedReflectorModel(incoming_rays, surface_normals, n1, n2, reflector_para
                     smooth_ref = np.copy(samesides)
                     smooth_ref[samesides] = smooth_reflection
                     [throwaway_var, theserays] = RefractionReflectionAtInterface.RefractionReflectionAtInterface(reflected_rays[smooth_ref, :], surface_normals[smooth_ref, :], n1[smooth_ref], n2[smooth_ref])
-                    theserays[:, 6:10] = theserays[:, 6:10] * np.matlib.repmat((reflected_rays[smooth_ref, 6] / theserays[:, 6])[:,np.newaxis], 1, 4)
+                    theserays[:, 6:10] = theserays[:, 6:10] * (reflected_rays[smooth_ref, 6] / theserays[:, 6])[:,np.newaxis]
                     if np.any(np.isnan(theserays[:])):
                         print('whoops smooth!')
                     reflected_rays[smooth_ref, :] = theserays
@@ -236,7 +245,7 @@ def UnifiedReflectorModel(incoming_rays, surface_normals, n1, n2, reflector_para
                     back_ref = np.copy(samesides)
                     back_ref[samesides] = back_reflection
                     [throwaway_var, theserays] = RefractionReflectionAtInterface.RefractionReflectionAtInterface(reflected_rays[back_ref, :], -reflected_rays[back_ref, 0:3], n1[back_ref], n2[back_ref])
-                    theserays[:, 6:10] = theserays[:, 6:10] * np.matlib.repmat((reflected_rays[back_ref, 6] / theserays[:, 6])[:,np.newaxis], 1, 4)
+                    theserays[:, 6:10] = theserays[:, 6:10] * (reflected_rays[back_ref, 6] / theserays[:, 6])[:,np.newaxis]
                     if np.any(np.isnan(theserays[:])):
                         print('whoops back!')
                     reflected_rays[back_ref, :] = theserays
@@ -248,7 +257,7 @@ def UnifiedReflectorModel(incoming_rays, surface_normals, n1, n2, reflector_para
                     diffuse_ref[samesides] = diffuse_reflection
                     diffuse_normal = np.array(GetLambertianNormal(reflected_rays[diffuse_ref, 0:3], surface_normals[diffuse_ref,:], interface_normals[diffuse_ref,:], interface_yaxis[diffuse_ref,:])[0])
                     [throwaway_var, theserays] = RefractionReflectionAtInterface.RefractionReflectionAtInterface(reflected_rays[diffuse_ref, :], diffuse_normal, n1[diffuse_ref], n2[diffuse_ref])
-                    theserays[:, 6:10] = theserays[:, 6:10] * np.matlib.repmat((reflected_rays[diffuse_ref, 6] / theserays[:, 6])[:,np.newaxis], 1, 4)
+                    theserays[:, 6:10] = theserays[:, 6:10] * (reflected_rays[diffuse_ref, 6] / theserays[:, 6])[:,np.newaxis]
                     if np.any(np.isnan(theserays[:])):
                         print('whoops diffuse!')
                     reflected_rays[diffuse_ref, :] = theserays
@@ -260,10 +269,10 @@ def UnifiedReflectorModel(incoming_rays, surface_normals, n1, n2, reflector_para
         [throwaway_var, reflected_rays[still_scattering, 0:3]] = GetLambertianNormal(reflected_rays[still_scattering, 0:3], -surface_normals[still_scattering,:], interface_normals[still_scattering,:], interface_yaxis[still_scattering,:])
         reflected_rays[still_scattering, 7:10] = 0
         reflected_rays[still_scattering, 6] = reflected_rays[still_scattering, 6] * reflector_params[still_scattering, 1]
-        reflected_rays[still_scattering, 3:6] = np.cross(np.matlib.repmat([1, 0, 0], np.sum(still_scattering), 1), reflected_rays[still_scattering, 0:3])
+        reflected_rays[still_scattering, 3:6] = np.cross(np.tile([1, 0, 0], (np.sum(still_scattering), 1)), reflected_rays[still_scattering, 0:3])
         bad_polref = np.logical_and(still_scattering, (np.sum(reflected_rays[:, 3:6]**2, axis=1)<=0))
-        reflected_rays[bad_polref, 3:6] = np.cross(np.matlib.repmat([0, 1, 0], np.sum(bad_polref), 1), reflected_rays[bad_polref, 0:3])
-        reflected_rays[still_scattering, 3:6] = reflected_rays[still_scattering, 3:6] / np.matlib.repmat(np.abs(np.sqrt(np.sum(reflected_rays[still_scattering, 3:6]**2,1)))[:, np.newaxis],1,3)
+        reflected_rays[bad_polref, 3:6] = np.cross(np.tile([0, 1, 0], (np.sum(bad_polref), 1)), reflected_rays[bad_polref, 0:3])
+        reflected_rays[still_scattering, 3:6] = reflected_rays[still_scattering, 3:6] / np.abs(np.sqrt(np.sum(reflected_rays[still_scattering, 3:6]**2,1)))[:, np.newaxis]
 
     if np.any(np.isnan(reflected_rays[:])):
         print('whoops!')

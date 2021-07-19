@@ -73,17 +73,17 @@ def RefractionReflectionAtInterface(incoming_rays, surface_normals, n1, n2, tir_
     # %% normalize inputs
     goodray_cut = np.sum(incoming_rays[:,0:3]**2,1) > 0
     if np.any(goodray_cut):
-        incoming_rays[goodray_cut,0:3] = incoming_rays[goodray_cut,0:3] / np.matlib.repmat(np.abs(np.sqrt(np.sum(incoming_rays[goodray_cut,0:3]**2,1)))[:,np.newaxis],1,3)
+        incoming_rays[goodray_cut,0:3] = incoming_rays[goodray_cut,0:3] / np.abs(np.sqrt(np.sum(incoming_rays[goodray_cut,0:3]**2,1)))[:,np.newaxis]
 
 
     goodsurface_cut = np.sum(surface_normals**2,1) > 0
     if np.any(goodsurface_cut):
-        surface_normals[goodsurface_cut,:] = surface_normals[goodsurface_cut,:] / np.matlib.repmat(np.abs(np.sqrt(np.sum(surface_normals[goodsurface_cut,:]**2,1)))[:,np.newaxis],1,3)
+        surface_normals[goodsurface_cut,:] = surface_normals[goodsurface_cut,:] / np.abs(np.sqrt(np.sum(surface_normals[goodsurface_cut,:]**2,1)))[:,np.newaxis]
 
-    incoming_rays[:,3:6] = incoming_rays[:,3:6] - np.matlib.repmat(np.sum(incoming_rays[:,3:6]*incoming_rays[:,0:3],axis=1)[:,np.newaxis],1,3) * incoming_rays[:,0:3]
+    incoming_rays[:,3:6] = incoming_rays[:,3:6] - np.sum(incoming_rays[:,3:6]*incoming_rays[:,0:3],axis=1)[:,np.newaxis] * incoming_rays[:,0:3]
     goodpolarization_cut = np.sum(incoming_rays[:,3:6]**2, axis=1) > 0
     if np.any(goodpolarization_cut):
-        incoming_rays[goodpolarization_cut,3:6] = incoming_rays[goodpolarization_cut,3:6] / np.matlib.repmat(np.abs(np.sqrt(np.sum(incoming_rays[goodpolarization_cut,3:6]**2, axis=1)))[:,np.newaxis],1,3)
+        incoming_rays[goodpolarization_cut,3:6] = incoming_rays[goodpolarization_cut,3:6] / np.abs(np.sqrt(np.sum(incoming_rays[goodpolarization_cut,3:6]**2, axis=1)))[:,np.newaxis]
 
     # %% set defaults
     refracted_rays = np.copy(incoming_rays)
@@ -99,7 +99,7 @@ def RefractionReflectionAtInterface(incoming_rays, surface_normals, n1, n2, tir_
     sin_incident_angle = np.abs(np.sqrt(np.sum(interface_normals**2, 1)))
     goodinterface_cut = sin_incident_angle > 0
     if np.any(goodinterface_cut):
-        interface_normals[goodinterface_cut,:] = interface_normals[goodinterface_cut,:] / np.matlib.repmat(sin_incident_angle[goodinterface_cut,np.newaxis],1,3)
+        interface_normals[goodinterface_cut,:] = interface_normals[goodinterface_cut,:] / sin_incident_angle[goodinterface_cut,np.newaxis]
 
     # %% rotate stokes parameters to new basis
     c_rot = np.sum(interface_normals * incoming_rays[:,3:6], axis=1)
@@ -145,7 +145,7 @@ def RefractionReflectionAtInterface(incoming_rays, surface_normals, n1, n2, tir_
     ts = np.abs(np.sqrt(1-np.conj(rs)*rs))
     tp = np.abs(np.sqrt(1-np.conj(rp)*rp))
 
-    if len(ts.shape) == 1: # make (x,) --> (x,1) for concat
+    if len(ts.shape) == 1: # make (x,) --> (x,1) for concat | this is and concat. is probably a messy solution
         ts = ts[:,np.newaxis]
     if len(tp.shape) == 1:
         tp = tp[:,np.newaxis]
@@ -156,7 +156,7 @@ def RefractionReflectionAtInterface(incoming_rays, surface_normals, n1, n2, tir_
 
     #refracted_amplitudes = amplitudes * np.tile(np.reshape(np.transpose([ts, tp]),(-1,1,2)),(1, 3, 1)) # MATLAB concatenation equivalence; transpose does not work
     #reflected_amplitudes = amplitudes * np.tile(np.reshape(np.transpose([rs, rp]),(-1,1,2)),(1, 3, 1))
-    refracted_amplitudes = amplitudes * np.tile(np.reshape(np.concatenate((ts, tp), axis=1), (-1,1,2)),(1,3,1))
+    refracted_amplitudes = amplitudes * np.tile(np.reshape(np.concatenate((ts, tp), axis=1), (-1,1,2)),(1,3,1)) #switch for broadcasting; numpy checks right to left for tiling
     reflected_amplitudes = amplitudes * np.tile(np.reshape(np.concatenate((rs, rp), axis=1), (-1,1,2)),(1,3,1))
 
     # %% get back to stokes parameters
@@ -185,11 +185,11 @@ def RefractionReflectionAtInterface(incoming_rays, surface_normals, n1, n2, tir_
     goodcut = np.logical_and(goodhit_cut, np.sum(new_yaxis**2,1) > 0)
 
     if np.any(goodcut):
-        new_yaxis[goodcut,:] = new_yaxis[goodcut,:] / np.matlib.repmat(np.abs(np.sqrt(np.sum(new_yaxis[goodcut,:]**2,1)))[:,np.newaxis],1,3)
+        new_yaxis[goodcut,:] = new_yaxis[goodcut,:] / np.abs(np.sqrt(np.sum(new_yaxis[goodcut,:]**2,1)))[:,np.newaxis]
 
     # %% calculate reflected ray direction for non-normal incidence
     if np.any(goodcut):
-        reflected_rays[goodcut,0:3] = np.matlib.repmat(cos_incident_angle[goodcut,np.newaxis],1,3) * surface_normals[goodcut,:] - np.matlib.repmat(sin_incident_angle[goodcut,np.newaxis],1,3) * new_yaxis[goodcut,:]
+        reflected_rays[goodcut,0:3] = cos_incident_angle[goodcut,np.newaxis] * surface_normals[goodcut,:] - sin_incident_angle[goodcut,np.newaxis] * new_yaxis[goodcut,:]
 
     # %% calculated refracted ray direction
     total_internal_reflection_cut = np.logical_and(goodcut, sin_refracted_angle >= 1)
@@ -203,7 +203,7 @@ def RefractionReflectionAtInterface(incoming_rays, surface_normals, n1, n2, tir_
 
 
     if np.any(refracted_cut):
-        refracted_rays[refracted_cut, 0:3] = -np.matlib.repmat(np.real(cos_refracted_angle[refracted_cut,np.newaxis]),1,3) * surface_normals[refracted_cut,:] - np.matlib.repmat(np.real(sin_refracted_angle[refracted_cut,np.newaxis]),1,3) * new_yaxis[refracted_cut,:]
+        refracted_rays[refracted_cut, 0:3] = -np.real(cos_refracted_angle[refracted_cut,np.newaxis]) * surface_normals[refracted_cut,:] - np.real(sin_refracted_angle[refracted_cut,np.newaxis]) * new_yaxis[refracted_cut,:]
 
     if np.any(total_internal_reflection_cut):
         if np.any(np.logical_and(total_internal_reflection_cut, (tir_handling<0))):
@@ -211,7 +211,7 @@ def RefractionReflectionAtInterface(incoming_rays, surface_normals, n1, n2, tir_
 
         if np.any(np.logical_and(total_internal_reflection_cut, (tir_handling>=0))): # check
             refracted_rays[np.logical_and(total_internal_reflection_cut, (tir_handling>=0)), 0:6] = reflected_rays[np.logical_and(total_internal_reflection_cut, (tir_handling>=0)),0:6]
-            refracted_rays[np.logical_and(total_internal_reflection_cut, (tir_handling>=0)), 6:10] = reflected_rays[np.logical_and(total_internal_reflection_cut, (tir_handling>=0)),6:10] * np.matlib.repmat(tir_handling[np.logical_and(total_internal_reflection_cut, (tir_handling>=0))],1,4)
+            refracted_rays[np.logical_and(total_internal_reflection_cut, (tir_handling>=0)), 6:10] = reflected_rays[np.logical_and(total_internal_reflection_cut, (tir_handling>=0)),6:10] * tir_handling[np.logical_and(total_internal_reflection_cut, (tir_handling>=0))]
 
     # %% all done!
     # print("incoming: " + str(incoming_rays[:]))

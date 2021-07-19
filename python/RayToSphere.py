@@ -41,10 +41,10 @@ def RayToSphere(starting_points, indir, sphere_center, sphere_radius):
 
     # solve quadratic for distance traveled
     a = np.sum(indir ** 2, axis=1)
-    b = 2 * np.sum(indir * (starting_points - np.matlib.repmat(sphere_center, numrays, 1)), axis=1)
-    c = np.sum((starting_points - np.matlib.repmat(sphere_center, numrays, 1)) ** 2, axis=1) - (sphere_radius ** 2)
+    b = 2 * np.sum(indir * (starting_points - sphere_center), axis=1)
+    c = np.sum((starting_points - sphere_center) ** 2, axis=1) - (sphere_radius ** 2)
 
-    distance_traveled = (np.matlib.repmat((-0.5 * b / a)[:,np.newaxis], 1, 2) + (0.5 * np.sqrt(b ** 2 - 4 * a * c) / a)[:,np.newaxis]) * np.array([1, -1]) # correct
+    distance_traveled = (np.tile((-0.5 * b / a)[:,np.newaxis], (1, 2)) + (0.5 * np.sqrt(b ** 2 - 4 * a * c) / a)[:,np.newaxis]) * np.array([1, -1]) # correct
     #print("distance: " + str(distance_traveled))
 
     # find intersection points
