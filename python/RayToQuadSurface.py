@@ -40,7 +40,7 @@ def RayToQuadSurface(starting_points, indir, q, p, r):
             len(indir.shape) != 2:
         raise Exception('Improper input to RayToQuadsurface')
     q = np.reshape(q, (3, 3))
-    p = p[:]
+    p = p[:] # [:,np.newaxis]
     numrays = starting_points.shape[0]
 
     """
@@ -62,7 +62,7 @@ def RayToQuadSurface(starting_points, indir, q, p, r):
     #     sum((starting_points * Q) .* starting_points, 2);
     a = np.sum((indir @ q) * indir, 1) # swapped indir * q for indir @ q, same below
     b = (indir @ p) + np.sum((indir @ q) * starting_points, 1) + np.sum((starting_points @ q) * indir, 1)
-    c = r + (starting_points @ p) + np.sum((starting_points @ q) * starting_points, 1) # will likely have to turn r into an np array
+    c = r + (starting_points @ p) + np.sum((starting_points @ q) * starting_points, 1)
 
     # linear cut = a==0 & b!=0
     # the previous line is strictly true, but we also want to avoid rounding error here...
@@ -87,14 +87,12 @@ def RayToQuadSurface(starting_points, indir, q, p, r):
         distance_traveled[linear_cut, 0] = -c[linear_cut] / b[linear_cut]
         distance_traveled[linear_cut, 1] = -b[linear_cut] / a[linear_cut]
     if np.any(quad_cut):
-        print(b.shape)
-        print(a.shape)
-        print(distance_traveled[quad_cut, :].shape)
         distance_traveled[quad_cut, :] = (np.tile((-0.5 * b[quad_cut] / a[quad_cut])[:, np.newaxis], (1, 2)) +
             (0.5 * (np.sqrt(b[quad_cut]**2 - 4 * a[quad_cut] * c[quad_cut]) / a[quad_cut])[:, np.newaxis])) * [1, -1] # check tile shape | * or @?
 
     # find intersection points
     intersection_points = starting_points[:,:,np.newaxis] + distance_traveled[:, np.newaxis, :] * indir[:, :, np.newaxis] # No need to reshape or tile starting_points or indir, will be handled automatically by numpy broadcasting
+    print("Intersections: " + str(intersection_points))
 
     # find surface normals
     # surface_normals = zeros(size(intersection_points));
@@ -110,11 +108,13 @@ def RayToQuadSurface(starting_points, indir, q, p, r):
         surface_normals[goodnormal_cut, :, n] = surface_normals[goodnormal_cut, :, n] / \
             np.abs(np.sqrt(np.sum(surface_normals[goodnormal_cut, :, n] ** 2, 1)))[:,np.newaxis] # check broadcasting shape; denominator assumed (n,)
 
+    print("Normals: " + str(surface_normals))
     # crossing_into = round(-sign(sum(repmat(incoming_directions,[1,1,2]) .* surface_normals,2)));
     # surface_normals = surface_normals .* repmat(crossing_into,[1 3 1]);
     # crossing_into = reshape(crossing_into,[],2);
     crossing_into = np.round_(np.sign(np.sum(indir[:, :, np.newaxis] * surface_normals, axis=1)))
     surface_normals = surface_normals * crossing_into[:, np.newaxis, :]
+    print("Normals after: " + str(surface_normals))
     crossing_into = np.reshape(crossing_into, (-1, 2))
 
     return [intersection_points, surface_normals, distance_traveled, crossing_into]
