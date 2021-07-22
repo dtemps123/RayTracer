@@ -27,7 +27,7 @@ def RayToTorus(starting_points, indir, torus_center, torus_axis, r1, r2):
     crossing_into = []
 
     # check inputs
-    if params < 4 or len(torus_center) != 3 or len(torus_axis) != 3 or r1.size != 1 or r2.size != 1 or \
+    if params < 4 or len(torus_center) != 3 or len(torus_axis) != 3 or not isinstance(r1, (int, float)) or not isinstance(r2, (int, float)) or \
         starting_points.shape[1] != 3 or indir.shape[1] != 3 or starting_points.shape[0] != indir.shape[0]:
         raise Exception('Improper input to RayToTorus')
     torus_center = np.transpose(torus_center[:,np.newaxis])
@@ -35,7 +35,7 @@ def RayToTorus(starting_points, indir, torus_center, torus_axis, r1, r2):
     numrays = starting_points.shape[0]
 
     if np.sum(torus_axis**2) > 0:
-        torus_axis = torus_axis / np.abs(np.sqrt(np.sum(torus_axis**2)))[:,np.newaxis]
+        torus_axis = torus_axis / np.abs(np.sqrt(np.sum(torus_axis**2)))
     else:
         raise Exception('Invalid torus for RayToTorus')
 
@@ -52,13 +52,14 @@ def RayToTorus(starting_points, indir, torus_center, torus_axis, r1, r2):
 
     a4 = (np.sum(v**2, axis=1) + np.sum(w**2, axis=1)) ** 2
     a3 = 4 * (np.sum(v**2, axis=1) + np.sum(w**2, axis=1)) * (np.sum(u*v, axis=1) + np.sum(y*w, axis=1))
-    a2 = 4 * (np.sum(u*v, axis=1) + np.sum(y*w, axis=1)) ** 2 - (4 * r1**2 @ np.sum(v**2, axis=1)) + \
+    a2 = 4 * (np.sum(u*v, axis=1) + np.sum(y*w, axis=1)) ** 2 - (4 * r1**2 * np.sum(v**2, axis=1)) + \
          (2 * (np.sum(v**2, axis=1) + np.sum(w**2, axis=1))) * (np.sum(u**2, axis=1) + r1**2 + np.sum(y**2, axis=1) - r2**2)
     a1 = 4 * (np.sum(u*v, axis=1) + np.sum(y*w, axis=1)) * \
-         (np.sum(u**2, axis=1) + r1**2 + np.sum(y**2, axis=1) - r2**2) - (8 * r1**2 @ np.sum(u*v, axis=1))
-    a0 = (np.sum(u**2, axis=1) + r1**2 + np.sum(y**2, axis=1) - r2**2)**2 - 4 * r1**2 @ np.sum(u**2, axis=1)
+         (np.sum(u**2, axis=1) + r1**2 + np.sum(y**2, axis=1) - r2**2) - (8 * r1**2 * np.sum(u*v, axis=1))
+    a0 = (np.sum(u**2, axis=1) + r1**2 + np.sum(y**2, axis=1) - r2**2)**2 - 4 * r1**2 * np.sum(u**2, axis=1)
 
-    a = np.array([a4, a3, a2, a1, a0])
+    a = np.array([a4, a3, a2, a1, a0]) # I believe matlab treats this as a nx5, numpy as a 5xn
+    a = np.transpose(a)
 
     quartic_cut = np.not_equal(a[:, 0], 0)
     cubic_cut = np.logical_and(~quartic_cut, np.not_equal(a[:, 1], 0))
