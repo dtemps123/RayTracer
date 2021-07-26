@@ -129,10 +129,6 @@ class RayTracer2_Display:
         via the following line of code: self.{method}().  Keep in mind the "self" will be replaced by whatever name you gave\
         to the variable referencing this class.')
         return  methods
-    
-    def descriptions(self):
-        '''Gives the docstring of RayTracer2 if you really do not feel like typing in RayTracer2?'''
-        RayTracer2?
 
         
         
