@@ -120,7 +120,7 @@ def donut(n_in):
     collector.description = "spherical surface for checking for escaped rays"
     collector.shape = 'sphere'
     collector.param_list = [np.array([0, 0, 0]), 20]
-    collector.inbounds_function = lambda p: np.reshape((p[:,0,:]**2 + p[:,1,:]**2 + p[:,2,:]**2) == 20, (p.shape[0], -1))
+    collector.inbounds_function = lambda p: np.reshape((p[:,0,:]**2 + p[:,1,:]**2 + p[:,2,:]**2) == 20**2, (p.shape[0], -1))
     collector.n_outside = sys.float_info.max
     collector.n_inside = sys.float_info.max
     collector.surface_type = 'normal'
@@ -147,7 +147,7 @@ def main():
     n = 10 # number of rays
 
     [starts, rays, surfaces] = donut(n)
-    [ray_interfaces, absorption_table, raytable] = RayTracer2.RayTracer2(starts, rays, surfaces)
+    [ray_interfaces, absorption_table, raytable] = RayTracer2.RayTracer2(starts, rays, surfaces, max_scat=5)
 
     print("Any escaped rays?")
     print(absorption_table)

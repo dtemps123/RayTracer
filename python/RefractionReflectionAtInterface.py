@@ -114,7 +114,7 @@ def RefractionReflectionAtInterface(incoming_rays, surface_normals, n1, n2, tir_
     # % again, if we had a 2x2 rotmat, we would write:
     # %     incoming_rays(goodinterface_cut,8:9) = incoming_rays(goodinterface_cut,8:9) * rotmat;
     # % but instead we do it one element at a time
-        old_polarization = incoming_rays[goodinterface_cut,7:9]
+        old_polarization = np.copy(incoming_rays[goodinterface_cut,7:9]) # made old_polarization copy
         incoming_rays[goodinterface_cut,7] = old_polarization[:,0]*c2_rot[goodinterface_cut] - old_polarization[:,1]*s2_rot[goodinterface_cut]
         incoming_rays[goodinterface_cut,8] = old_polarization[:,0]*s2_rot[goodinterface_cut] + old_polarization[:,1]*c2_rot[goodinterface_cut]
         refracted_rays[goodinterface_cut,3:10] = incoming_rays[goodinterface_cut,3:10]
