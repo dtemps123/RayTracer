@@ -209,7 +209,9 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
         min_travel_length = min_travel_len[0]
 
 
-    if np.size(max_scat) == 1 and max_scat == 10:
+    if isinstance(max_scat, int) and max_scat == 10:
+        max_scatters = max_scat
+    elif isinstance(max_scat, int):
         max_scatters = max_scat
     else:
         max_scatters = max_scat[0]
@@ -395,8 +397,6 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
             sin_theta = np.sqrt(1-cos_theta**2)
             phi = np.random.randn(n_diffuse,1) * 2 * np.pi
 
-            print(s_next[diffuse_cut,:].shape)
-            print(s_next[diffuse_cut,:])
             x_tmp = np.cross(s_next[diffuse_cut,:], np.matlib.repmat([1, 0, 0], n_diffuse,1), axis=1) #set axis... numpy cross() inputs differ from matlab
             y_tmp = np.cross(s_next[diffuse_cut,:], np.matlib.repmat([0, 1, 0],n_diffuse,1), axis=1) #set axis... numpy cross() inputs differ from matlab
             tmpcut = np.all(x_tmp==0,2)
@@ -473,7 +473,7 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
             refracted_rays[reflection_roll, :] = reflected_rays[reflection_roll, :]
             amp_rescale = total_amp / refracted_rays[:, 6]
             amp_rescale[np.isnan(amp_rescale)] = 0
-            print("total amp: " + str(total_amp))
+            #print("total amp: " + str(total_amp))
             total_amp[np.isnan(total_amp)] = 0
             refracted_rays[:, 6] = total_amp
             refracted_rays[:, 7:10] = refracted_rays[:, 7:10] * amp_rescale[:,np.newaxis] # removed repmat
@@ -481,10 +481,10 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
 
             
         surface_abs = incoming_rays[:, 6] - refracted_rays[:, 6] - reflected_rays[:, 6]
-        print("incoming abs: " + str(incoming_rays[:, 6]))
-        print("refracted abs: " + str(refracted_rays[:, 6]))
-        print("reflected abs: " + str(reflected_rays[:, 6]))
-        print("surface absorption: " + str(surface_abs))
+        # print("incoming abs: " + str(incoming_rays[:, 6]))
+        # print("refracted abs: " + str(refracted_rays[:, 6]))
+        # print("reflected abs: " + str(reflected_rays[:, 6]))
+        # print("surface absorption: " + str(surface_abs))
 
 #        %% now fill out the first three pieces of the absorption table
         for i_s in range(1,len(surfacelist)):
