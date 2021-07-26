@@ -17,6 +17,7 @@
 
 import sys
 import numpy as np
+import warnings
 
 def RayToTorus(starting_points, indir, torus_center, torus_axis, r1, r2):
     params = len(locals())
@@ -82,12 +83,13 @@ def RayToTorus(starting_points, indir, torus_center, torus_axis, r1, r2):
 
     if np.any(cubic_cut):
         for ix in np.transpose(np.nonzero(cubic_cut)):
-            distance_traveled[ix, 0:3] = np.roots(a[ix, 1:5])
+            distance_traveled[ix, 0:3] = np.roots(a[ix, 1:5].flatten())
         distance_traveled[cubic_cut, 3] = np.nan
 
     if np.any(quartic_cut):
         for ix in np.transpose(np.nonzero(quartic_cut)):
-            distance_traveled[ix, :] = np.roots(a[ix, :])
+            warnings.filterwarnings('ignore')  # ignore ComplexWarning here, want to get rid of imaginary parts
+            distance_traveled[ix, :] = np.roots(a[ix, :].flatten())
 
     # find intersection_points
     intersection_points = starting_points[:, :, np.newaxis] + distance_traveled[:, np.newaxis, :] * indir[:, :, np.newaxis] # check reshaping
@@ -98,7 +100,7 @@ def RayToTorus(starting_points, indir, torus_center, torus_axis, r1, r2):
         x = intersection_points[:, :, i_l] - torus_center
         y = (x @ np.transpose(torus_axis) @ torus_axis)
         u = x - y
-        surface_normals[:, :, i_l] = (1 / r2) @ (u * (1 - (r1 / np.sqrt(np.sum(u**2, axis=1))[:,np.newaxis])) + y)
+        surface_normals[:, :, i_l] = (1 / r2) * (u * (1 - (r1 / np.sqrt(np.sum(u**2, axis=1))[:,np.newaxis])) + y)
 
     crossing_into = np.round_(-np.sign(np.sum(indir[:, :, np.newaxis] * surface_normals, axis=1)))
     surface_normals = surface_normals * crossing_into[:, np.newaxis, :]

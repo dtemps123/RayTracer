@@ -133,8 +133,13 @@ def RefractionReflectionAtInterface(incoming_rays, surface_normals, n1, n2, tir_
     amplitudes[:,2,1] = amplitudes[:,1,0]
 
     # %% calculated reflected and refracted amplitudes
+    print("incident angle: " + str(sin_incident_angle))
     sin_refracted_angle = sin_incident_angle * n1 / n2
+    print("sin: " + str(sin_refracted_angle))
+    print("n1: " + str(n1))
+    print("n2: " + str(n2))
     cos_refracted_angle = np.sqrt(1 - sin_refracted_angle**2 + 0j)
+    print("cos: " + str(cos_refracted_angle))
 
     rs = (n1*cos_incident_angle - n2*cos_refracted_angle) / (n1*cos_incident_angle + n2*cos_refracted_angle)
     rp = -(n1*cos_refracted_angle - n2*cos_incident_angle) / (n1*cos_refracted_angle + n2*cos_incident_angle)
@@ -154,10 +159,16 @@ def RefractionReflectionAtInterface(incoming_rays, surface_normals, n1, n2, tir_
     if len(rp.shape) == 1:
         rp = rp[:,np.newaxis]
 
+    # print("ts: " + str(ts))
+    # print("tp: " + str(tp))
+    # print("rs: " + str(rs))
+    # print("rp: " + str(rp))
     #refracted_amplitudes = amplitudes * np.tile(np.reshape(np.transpose([ts, tp]),(-1,1,2)),(1, 3, 1)) # MATLAB concatenation equivalence; transpose does not work
     #reflected_amplitudes = amplitudes * np.tile(np.reshape(np.transpose([rs, rp]),(-1,1,2)),(1, 3, 1))
     refracted_amplitudes = amplitudes * np.tile(np.reshape(np.concatenate((ts, tp), axis=1), (-1,1,2)),(1,3,1)) #switch for broadcasting; numpy checks right to left for tiling
     reflected_amplitudes = amplitudes * np.tile(np.reshape(np.concatenate((rs, rp), axis=1), (-1,1,2)),(1,3,1))
+    # print("refracted amp: " + str(refracted_amplitudes))
+    # print("reflected amp: " + str(reflected_amplitudes))
 
     # %% get back to stokes parameters
     if np.any(goodhit_cut):
@@ -214,9 +225,10 @@ def RefractionReflectionAtInterface(incoming_rays, surface_normals, n1, n2, tir_
             refracted_rays[np.logical_and(total_internal_reflection_cut, (tir_handling>=0)), 6:10] = reflected_rays[np.logical_and(total_internal_reflection_cut, (tir_handling>=0)),6:10] * tir_handling[np.logical_and(total_internal_reflection_cut, (tir_handling>=0))]
 
     # %% all done!
-    # print("incoming: " + str(incoming_rays[:]))
-    # print("reflected: " + str(reflected_rays[:]))
-    # print("refracted: " + str(refracted_rays[:]))
+    print("all done!")
+    print("incoming: " + str(incoming_rays[:]))
+    print("reflected: " + str(reflected_rays[:]))
+    print("refracted: " + str(refracted_rays[:]))
     # print("refracted check: " + str(refracted_rays[:, 0:3]) + str(refracted_rays[:, 6]))
     print("\n")
     return [refracted_rays, reflected_rays]

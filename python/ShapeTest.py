@@ -3,6 +3,7 @@ import math
 import random
 import RayTracer2
 import surface
+import sys
 
 
 def ParabolicReflector(foc_z: float, n_in=10):
@@ -70,14 +71,14 @@ def donut(n_in):
 
     center = np.array([0, 0, 0])
     ax = np.array([0, 0, 1])
-    r1 = 5
-    r2 = 8
+    r1 = 8  # large radius (from center of hole to center of tube)
+    r2 = 2  # small radius (height)
 
     # First, create ray starting points and isotropic rays
     # Coordinates of startingpoint -- same for all rays
-    x = 6
+    x = 8.5
     y = 0
-    z = 1
+    z = .5
 
     n = n_in  # number of rays
 
@@ -108,8 +109,8 @@ def donut(n_in):
     reflector.description = "fully enclosed donut aligned on z-axis with center at origin"
     reflector.shape = 'torus'
     reflector.param_list = [center, ax, r1, r2]
-    reflector.inbounds_function = lambda p: np.reshape(np.abs(p[:,2,:]) <= (r2 - r1),(p.shape[0], -1))
-    reflector.n_outside = np.inf
+    reflector.inbounds_function = lambda p: np.reshape(np.abs(p[:,2,:]) <= r2,(p.shape[0], -1))
+    reflector.n_outside = sys.float_info.max
     reflector.n_inside = 1
     reflector.surface_type = 'normal'
     reflector.absorption = 0
@@ -120,8 +121,8 @@ def donut(n_in):
     collector.shape = 'sphere'
     collector.param_list = [np.array([0, 0, 0]), 20]
     collector.inbounds_function = lambda p: np.reshape((p[:,0,:]**2 + p[:,1,:]**2 + p[:,2,:]**2) == 20, (p.shape[0], -1))
-    collector.n_outside = np.inf
-    collector.n_inside = np.inf
+    collector.n_outside = sys.float_info.max
+    collector.n_inside = sys.float_info.max
     collector.surface_type = 'normal'
     collector.absorption = 1
     surface_list.append(collector)
@@ -143,13 +144,16 @@ def main():
         print("Direction of reflected " + str(i + 1) + ": " + str(ray_interfaces[i].reflected_ray))
     """
 
-    n = 4 # number of rays
+    n = 10 # number of rays
 
     [starts, rays, surfaces] = donut(n)
     [ray_interfaces, absorption_table, raytable] = RayTracer2.RayTracer2(starts, rays, surfaces)
 
     print("Any escaped rays?")
     print(absorption_table)
+    print("Outer sphere:")
+    print(absorption_table[:, 0, 1, :])
+    print("Num scatters: " + str(len(ray_interfaces)))
 
 if __name__ == "__main__":
     main()
