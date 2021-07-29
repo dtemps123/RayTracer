@@ -39,51 +39,56 @@ n_air = 1.00
 clausius_mossotti = lambda n0, r: math.sqrt(((1 + 2*r) * n0**2 + 2 - 2*r) / ((1 - r) * n0**2 + 2 + r))
 
 ## Dimensions in cm
-ojar_thick = .25 # thickness of cylinder wall
-ojar_cylrad = 7.5 # outer radius of cylinder
-ojar_axrad = 15.0 # outer radius of sphere (along cylinder axis)
-ojar_knucklerad = 2.5
-ojar_cyllength = 40.0
-ojar_elevation = 20.0
+ojar_thick = .5 # thickness of cylinder wall
+ojar_cylrad = 12 # outer radius of cylinder
+ojar_axrad = 24 # outer radius of sphere (along cylinder axis)
+ojar_knucklerad = 4
+ojar_cyllength = 30
+ojar_elevation = 0
 
-ijar_thick = .25 # thickness of cylinder wall
-ijar_cylrad = 6.5 # outer radius of cylinder
-ijar_axrad = 13.0 # outer radius of sphere (along cylinder axis)
-ijar_knucklerad = 2.5
-ijar_cyllength = 20.0
-ijar_elevation = 0.0
+ijar_thick = .5 # thickness of cylinder wall
+ijar_cylrad = 10.5 # outer radius of cylinder
+ijar_axrad = 21 # outer radius of sphere (along cylinder axis)
+ijar_knucklerad = 3
+ijar_cyllength = 10.0
+ijar_elevation = -2.54*7.74
+
+z0 = 2.54*(20.73+7.74) # +distance from seal to z=0
+vp_focuselev = 65.40 - z0
+vp_focuslen = 29.23 #25;%33.5; % distance from convergence point to CF seal
+vp_phi = np.pi/3
 
 vp_s = 10.0 # radial position of air-side center of viewport
 vp_elev = 60.0 # vertical position of air-side center of viewport
-vp_win_rad = 1.73*.5*2.54 # radius of glass (black on circumference)
+vp_win_rad = 1.375*.5*2.54 # radius of glass (black on circumference)
 vp_air_rad = 1.25*.5*2.54 # radius of air-side can (black on circumference)
-vp_can_rad = 2 * 2.54
-vp_can_wall = .125*2.54
-vp_flange_rad = 3.375*2.54
-vp_nip_rad = 1.75*.5*2.54 # radius of hydraulic-side nipple (black on circumference)
-vp_win_thick = .25*2.54
-vp_nip_top = .5
-vp_theta = 6 * math.pi / 180
-vp_can_OAL = 6*2.54
-vp_flange_thick = [1.0, 1.0, 1.0, 1.0, 1.0]* 2.54 *.5
+vp_can_rad = 2.54
+vp_can_wall = .0625*2.54
+vp_flange_rad = .5*5.5*2.54
+vp_nip_rad = 2.54*4.75*.5 # radius of hydraulic-side nipple (black on circumference)
+vp_win_thick = .2*2.54 #%mpf is .23*2.54;
+vp_nip_top = -.254*2.54 #% mpf is .08*2.54% 
+vp_theta = .3737 #20*pi/180;%21.8*pi/180;
+vp_can_OAL = 6.43*2.54
+vp_flange_thick = np.array([2.88, .69, .625, .625, .625])* 2.54
 
-rd_rad = 12.0 # reflector - diffuser radius
-rd_top = 100.0
-rd_bot = 0
-rdcone_top = 120.0
-rdcone_toprad = 16.0
-rdtopcone_apex = 150.0
-rdtopcone_rad = 10.5
-rdtopcone_bot = -20.0
-rdbotcone_apex = -15.2
+rd_rad = 12.5 # reflector - diffuser radius
+rd_top = 0
+rd_bot = -25
+rdcone_top = 17.5 + 10
+rdcone_toprad = 14.5 + 20
+rdtopcone_apex = 21 + 10
+rdtopcone_rad = 9.5
+rdtopcone_bot = 19.5 + 10
+rdbotcone_apex = -15.2-10
 rdbotcone_rad = 10.5
-rdbotcone_bot = -20.0
+rdbotcone_bot = -20.0-10
 
-pv_bot = -20.0
-pv_top = 100.0 # +100
-pv_rad = 30.0
-pv_thick = 1.0
-pv_axrad = 15.0
+pv_top = vp_focuselev + vp_focuslen*np.cos(vp_theta)-2.54*(5.49-1.5)
+pv_bot = pv_top - 2.54*31.17
+pv_rad = 8*2.54
+pv_thick = .375*2.54
+pv_axrad = (3.07)*2.54
 
 ## Derived dimensions
 t_o = np.array([0, ojar_thick])
