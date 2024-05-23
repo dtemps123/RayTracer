@@ -47,9 +47,7 @@
 import numpy as np
 
 ## pyraytracer files
-from RefractionReflectionAtInterface import RefractionReflectionAtInterface
-
-
+from .RefractionReflectionAtInterface import RefractionReflectionAtInterface
 
 def GetFacetNormal(indir, s_norm, s_x, s_y, sig_a):
     # % Same implementation here as in Geant4

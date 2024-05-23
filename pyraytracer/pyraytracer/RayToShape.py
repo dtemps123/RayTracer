@@ -2,11 +2,11 @@
 import numpy as np
 
 ## pyraytracer files
-from RayToCylinder import RayToCylinder
-from RayToPlane import RayToPlane
-from RayToSphere import RayToSphere
-from RayToTorus import RayToTorus
-from RayToQuadSurface import RayToQuadSurface
+from .RayToCylinder import RayToCylinder
+from .RayToPlane import RayToPlane
+from .RayToSphere import RayToSphere
+from .RayToTorus import RayToTorus
+from .RayToQuadSurface import RayToQuadSurface
 # Will have to import other geometries after writing them
 
 def RayToShape(shape, sp, indir, param_list):

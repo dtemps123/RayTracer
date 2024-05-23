@@ -179,12 +179,12 @@ import numpy as np
 import numpy.matlib
 
 ## pyraytracer files
-from rayInterfaces import rayInterfaces
-from RayleighScatteringClass import RayleighScatteringClass
-from RefractionReflectionAtInterface import RefractionReflectionAtInterface
-from UnifiedReflectorModel import UnifiedReflectorModel
-from IntersectFunction import IntersectFunction
-from surface import surface
+from .rayInterfaces import rayInterfaces
+from .RayleighScatteringClass import RayleighScatteringClass
+from .RefractionReflectionAtInterface import RefractionReflectionAtInterface
+from .UnifiedReflectorModel import UnifiedReflectorModel
+from .IntersectFunction import IntersectFunction
+from .surface import surface
 
 # noinspection PyRedundantParentheses
 def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_travel_len = np.spacing(np.float64(1)), follow_thresh = np.array([0, 0], dtype=np.float64), tir_handling = [], full_output = True, singlechild = True, output_raytable = False):

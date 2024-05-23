@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 ## pyraytracer files
-from RayTracer2 import RayTracer2
+from .RayTracer2 import RayTracer2
 
 class RayTracer2_Display:
     '''This class takes the output data from RayTracer2 and displays it via various methods within this class to make 
