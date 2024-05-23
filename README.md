@@ -1,7 +1,8 @@
 # RayTracer
-Optical ray tracing code
+Original Author: C. Eric Dahl, Northwestern University
+Forked from: https://github.com/SBC-Collaboration/RayTracer
 
-Propagate rays through a surface based geometry.
+Optical ray tracing code that propagates rays through a surface based geometry.
 
 Surfaces are defined by their geometry and optical properties.  Supported geometries include sections of linear, quadratic, and toroidal surfaces, with easy implementation shortcuts for planes, cylinders, and spheres.  Supported optical properties include dielectric interfaces, diffuse and retro-reflectors, and a unified absorber/reflector model based on the Geant4 "UNIFIED" optical photon model.
 
