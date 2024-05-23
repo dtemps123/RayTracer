@@ -1,2 +1,8 @@
-pyraytracer/__pycache__/*
-pyraytracer/.ipynb_checkpoints/*
+pyraytracer/build/
+pyraytracer/build/*
+pyraytracer/pyraytracer/__pycache__/
+pyraytracer/pyraytracer/__pycache__/*
+pyraytracer/pyraytracer/.ipynb_checkpoints/*
+pyraytracer/pyraytracer/.ipynb_checkpoints/*
+pyraytracer/pyraytracer.egg-info/
+pyraytracer/pyraytracer.egg-info/*
