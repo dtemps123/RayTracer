@@ -45,7 +45,9 @@
 # %
 # % 8/18/16, CED
 import numpy as np
-import RefractionReflectionAtInterface
+
+## pyraytracer files
+from RefractionReflectionAtInterface import RefractionReflectionAtInterface
 
 
 
@@ -170,7 +172,7 @@ def UnifiedReflectorModel(incoming_rays, surface_normals, n1, n2, reflector_para
             facet_normals = GetFacetNormal(reflected_rays[still_crossing, 0:3], surface_normals[still_crossing,:], interface_normals[still_crossing,:], interface_yaxis[still_crossing,:], reflector_params[still_crossing,0])
 
             # % then get refrations/reflections off of this facet
-            [this_refractedray, this_reflectedray] = RefractionReflectionAtInterface.RefractionReflectionAtInterface(reflected_rays[still_crossing, :], facet_normals, n1[still_crossing], n2[still_crossing])
+            [this_refractedray, this_reflectedray] = RefractionReflectionAtInterface(reflected_rays[still_crossing, :], facet_normals, n1[still_crossing], n2[still_crossing])
         
             # % roll dice to see whether we're following the refraction or the
             # % reflection
@@ -233,7 +235,7 @@ def UnifiedReflectorModel(incoming_rays, surface_normals, n1, n2, reflector_para
                     #print("smooth")
                     smooth_ref = np.copy(samesides)
                     smooth_ref[samesides] = smooth_reflection
-                    [throwaway_var, theserays] = RefractionReflectionAtInterface.RefractionReflectionAtInterface(reflected_rays[smooth_ref, :], surface_normals[smooth_ref, :], n1[smooth_ref], n2[smooth_ref])
+                    [throwaway_var, theserays] = RefractionReflectionAtInterface(reflected_rays[smooth_ref, :], surface_normals[smooth_ref, :], n1[smooth_ref], n2[smooth_ref])
                     theserays[:, 6:10] = theserays[:, 6:10] * (reflected_rays[smooth_ref, 6] / theserays[:, 6])[:,np.newaxis]
                     if np.any(np.isnan(theserays[:])):
                         print('whoops smooth!')
@@ -244,7 +246,7 @@ def UnifiedReflectorModel(incoming_rays, surface_normals, n1, n2, reflector_para
                     #print("back")
                     back_ref = np.copy(samesides)
                     back_ref[samesides] = back_reflection
-                    [throwaway_var, theserays] = RefractionReflectionAtInterface.RefractionReflectionAtInterface(reflected_rays[back_ref, :], -reflected_rays[back_ref, 0:3], n1[back_ref], n2[back_ref])
+                    [throwaway_var, theserays] = RefractionReflectionAtInterface(reflected_rays[back_ref, :], -reflected_rays[back_ref, 0:3], n1[back_ref], n2[back_ref])
                     theserays[:, 6:10] = theserays[:, 6:10] * (reflected_rays[back_ref, 6] / theserays[:, 6])[:,np.newaxis]
                     if np.any(np.isnan(theserays[:])):
                         print('whoops back!')
@@ -256,7 +258,7 @@ def UnifiedReflectorModel(incoming_rays, surface_normals, n1, n2, reflector_para
                     diffuse_ref = np.copy(samesides)
                     diffuse_ref[samesides] = diffuse_reflection
                     diffuse_normal = np.array(GetLambertianNormal(reflected_rays[diffuse_ref, 0:3], surface_normals[diffuse_ref,:], interface_normals[diffuse_ref,:], interface_yaxis[diffuse_ref,:])[0])
-                    [throwaway_var, theserays] = RefractionReflectionAtInterface.RefractionReflectionAtInterface(reflected_rays[diffuse_ref, :], diffuse_normal, n1[diffuse_ref], n2[diffuse_ref])
+                    [throwaway_var, theserays] = RefractionReflectionAtInterface(reflected_rays[diffuse_ref, :], diffuse_normal, n1[diffuse_ref], n2[diffuse_ref])
                     theserays[:, 6:10] = theserays[:, 6:10] * (reflected_rays[diffuse_ref, 6] / theserays[:, 6])[:,np.newaxis]
                     if np.any(np.isnan(theserays[:])):
                         print('whoops diffuse!')

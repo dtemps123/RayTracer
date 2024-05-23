@@ -177,12 +177,14 @@
 # % RayTracer2:  8/17/16, CED'''
 import numpy as np
 import numpy.matlib
-import rayInterfaces
-import RayleighScatteringClass
-import RefractionReflectionAtInterface
-import UnifiedReflectorModel
-import IntersectFunction
-import surface
+
+## pyraytracer files
+from rayInterfaces import rayInterfaces
+from RayleighScatteringClass import RayleighScatteringClass
+from RefractionReflectionAtInterface import RefractionReflectionAtInterface
+from UnifiedReflectorModel import UnifiedReflectorModel
+from IntersectFunction import IntersectFunction
+from surface import surface
 
 # noinspection PyRedundantParentheses
 def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_travel_len = np.spacing(np.float64(1)), follow_thresh = np.array([0, 0], dtype=np.float64), tir_handling = [], full_output = True, singlechild = True, output_raytable = False):
@@ -234,7 +236,7 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
         raytable[0, :, 3:13] = rays
 
 #   Adds a null row to the surface list to avoid index -0 issues.
-    null_surface = surface.surface()
+    null_surface = surface()
     surfacelist = np.insert(surfacelist,0,null_surface,axis=0)        
         
 #    %% check optional fields in surface list, necessary for backwards compatibility
@@ -297,7 +299,7 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
         for n in range(1,len(surfacelist)):
 #            % find scatter point, normal, distance, and orientation for
 #            % scatters on this surface
-            [p_intersect, s_normal, l_ray, s_orientation] = IntersectFunction.IntersectFunction(surfacelist[n],p_start,incoming_rays[:,0:3])
+            [p_intersect, s_normal, l_ray, s_orientation] = IntersectFunction(surfacelist[n],p_start,incoming_rays[:,0:3])
 
             s_orientation = np.array(s_orientation) #convert into np array
             
@@ -446,12 +448,12 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
 #        % First handle normal, diffuse, and retro surfaces
 #        % (all subject to 'normal_scatter_cut')
         if np.any(normal_scatter_cut): # NaN's are happening here
-            [refracted_rays[normal_scatter_cut,:], reflected_rays[normal_scatter_cut,:]] = RefractionReflectionAtInterface.RefractionReflectionAtInterface(incoming_rays[normal_scatter_cut,:], s_next[normal_scatter_cut,:], n_next[normal_scatter_cut,0], n_next[normal_scatter_cut,1], tir_handling)
+            [refracted_rays[normal_scatter_cut,:], reflected_rays[normal_scatter_cut,:]] = RefractionReflectionAtInterface(incoming_rays[normal_scatter_cut,:], s_next[normal_scatter_cut,:], n_next[normal_scatter_cut,0], n_next[normal_scatter_cut,1], tir_handling)
             ######## BOOKMARK ##########
 
 #        % Next handle unified reflecting surfaces
         if np.any(unified_scatter_cut):
-            reflected_rays[unified_scatter_cut,:] = UnifiedReflectorModel.UnifiedReflectorModel(incoming_rays[unified_scatter_cut,:], sm_next[unified_scatter_cut,:], n_next[unified_scatter_cut,0], n_next[unified_scatter_cut,1], unifiedsurface_next[unified_scatter_cut,:])
+            reflected_rays[unified_scatter_cut,:] = UnifiedReflectorModel(incoming_rays[unified_scatter_cut,:], sm_next[unified_scatter_cut,:], n_next[unified_scatter_cut,0], n_next[unified_scatter_cut,1], unifiedsurface_next[unified_scatter_cut,:])
         
 #        % apply the absorption coefficient for all surfaces
         if np.any(surface_scatter_cut): # ISSUE IS WITH refracted/reflected_rays[surface_scatter_cut,6:10] TURNING NaN
@@ -459,7 +461,7 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
             reflected_rays[surface_scatter_cut,6:10] = reflected_rays[surface_scatter_cut,6:10] * (1-abs_next[surface_scatter_cut])[:,np.newaxis]
         
 #        % and finally do the Rayleigh-scattered rays
-        rsc = RayleighScatteringClass.RayleighScatteringClass()
+        rsc = RayleighScatteringClass()
         if np.any(rayleigh_scatter_cut):
             reflected_rays[rayleigh_scatter_cut, :] = rsc.RayleighScattering(incoming_rays[rayleigh_scatter_cut, :])
             
@@ -505,7 +507,7 @@ def RayTracer2(ray_startingpoints, rays, surfacelist = [], max_scat = 10, min_tr
         if full_output:
 #            % we round the indices because the sign command used to find
 #            % orientation sometimes gives non-integer surface indices
-            curr_ray_interface = rayInterfaces.rayInterfaces()
+            curr_ray_interface = rayInterfaces()
             curr_ray_interface.incoming_ray = incoming_rays[scatter_cut, :]
             curr_ray_interface.refracted_ray = refracted_rays[scatter_cut, :]
             curr_ray_interface.reflected_ray = reflected_rays[scatter_cut, :]

@@ -3,7 +3,9 @@
 # Boilderplate
 import pandas as pd
 import numpy as np
-import RayTracer2
+
+## pyraytracer files
+from RayTracer2 import RayTracer2
 
 class RayTracer2_Display:
     '''This class takes the output data from RayTracer2 and displays it via various methods within this class to make 
@@ -89,7 +91,7 @@ class RayTracer2_Display:
           output_raytable     -   If false, the raytable output is not
                                     populated.  Default is false.'''
         
-        self.output = RayTracer2.RayTracer2(starting_points,rays,surfacelist,output_raytable=True)
+        self.output = RayTracer2(starting_points,rays,surfacelist,output_raytable=True)
     
     # creates a method that lists all available display commands
     def methods(self):
