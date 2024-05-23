@@ -22,6 +22,7 @@ try:
     from .RayleighScatteringClass import *
     from .RefractionReflectionAtInterface import *
     from .UnifiedReflectorModel import *
+    from .rayInterfaces import *
 
 except ImportError as err:
     print("\033[1;31mERROR\033[0m: Import error from pyraytracer lib.")
